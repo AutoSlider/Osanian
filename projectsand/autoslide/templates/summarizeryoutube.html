@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>텍스트 요약</title>
+    <style>
+    body {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    .content {
+        display: none;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+    }
+    .scrollable-box {
+        border: 1px solid #ccc;
+        padding: 1rem;
+        width: 50%;
+        max-height: 400px; /* 원하는 높이로 조절하세요 */
+        overflow-y: auto;
+        overflow-x: hidden;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+    }
+    </style>
+</head>
+<body>
+    <h1>텍스트 요약 서비스</h1>
+    <form method="post" action="{% url 'summarizer2' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <select id="service-selector">
+            <option value="text">텍스트 요약</option>
+            <option value="youtube">유튜브 자막 요약</option>
+            <option value="file">파일 업로드 요약</option>
+        </select><br><br>
+        <div id="text-input-container">
+            <label for="input_text">텍스트를 입력하세요:</label><br>
+            <textarea name="input_text" id="input_text" rows="4" cols="50"></textarea><br>
+        </div>
+        <div id="youtube-input-container" style="display: none;">
+            <label for="youtube_url">유튜브 링크를 입력하세요:</label><br>
+            <input type="text" name="youtube_url" id="youtube_url" value="{{ youtube_url }}"><br>
+        </div>
+        <div id="file-input-container" style="display: none;">
+            <label for="video_file">동영상 파일을 업로드하세요:</label><br>
+            <input type="file" name="video_file" id="video_file" accept="video/*"><br>
+            <!-- 드래그 앤 드롭 영역 추가 -->
+            <div id="drop-zone" style="border: 2px dashed #ccc; padding: 1rem; text-align: center; margin-top: 1rem; width: 50%; margin-left: auto; margin-right: auto;">
+                <p>파일을 여기에 드래그 앤 드롭하세요.</p>
+            </div>
+        </div>
+        <input type="submit" value="요약하기">
+    </form>
+    <select id="content-selector">
+        <option value="original_text">원문</option>
+        <option value="timeline_text">타임라인</option>
+        <option value="summary">요약 결과</option>
+    </select>
+    <div class="scrollable-box" id="content-display">
+    </div>
+    <h2>Summary Board</h2>
+    <table>
+      <tr>
+        <th>Author</th>
+        <th>Original Text</th>
+        <th>Summarized Text</th>
+        <th>Created At</th>
+      </tr>
+      {% for summary in summaries %}
+      <tr>
+        <td>{{ summary.author }}</td>
+        <td>{{ summary.original_text|truncatewords:20 }}</td>
+        <td>{{ summary.summarized_text|truncatewords:20 }}</td>
+        <td>{{ summary.created_at }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+
+    <script>
+    document.getElementById("service-selector").addEventListener("change", function() {
+    var selectedValue = this.value;
+
+    if (selectedValue === "text") {
+        document.getElementById("text-input-container").style.display = "block";
+        document.getElementById("youtube-input-container").style.display = "none";
+        document.getElementById("file-input-container").style.display = "none";
+    } else if (selectedValue === "youtube") {
+        document.getElementById("text-input-container").style.display = "none";
+        document.getElementById("youtube-input-container").style.display = "block";
+        document.getElementById("file-input-container").style.display = "none";
+    } else if (selectedValue === "file") {
+        document.getElementById("text-input-container").style.display = "none";
+        document.getElementById("youtube-input-container").style.display = "none";
+        document.getElementById("file-input-container").style.display = "block";
+    }
+    });
+
+
+    document.addEventListener("DOMContentLoaded", function() {
+        var content = "{{ original_text|escapejs }}";
+        document.getElementById("content-display").innerHTML = "<div>" + content + "</div>";
+    });
+
+    document.getElementById("content-selector").addEventListener("change", function() {
+        var selectedValue = this.value;
+        var content = "";
+
+        if (selectedValue === "original_text") {
+            content = "{{ original_text|escapejs }}";
+                    } else if (selectedValue === "timeline_text") {
+            content = "{{ timeline_text|escapejs }}";
+        } else if (selectedValue === "summary") {
+            content = "{{ summary|escapejs }}";
+        }
+
+        document.getElementById("content-display").innerHTML = "<div>" + content + "</div>";
+    });
+
+    // 드래그 앤 드롭 관련 스크립트 추가
+    var dropZone = document.getElementById('drop-zone');
+    var fileInput = document.getElementById('video_file');
+
+    // 드래그 앤 드롭 이벤트 리스너 추가
+    dropZone.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'copy';
+    });
+
+    dropZone.addEventListener('drop', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // 드롭한 파일 가져오기
+    var files = e.dataTransfer.files;
+
+    if (files.length > 0) {
+        // 첫 번째 파일을 input 태그에 추가
+        fileInput.files = files;
+
+        // 드롭존에 표시되는 메시지 변경
+        dropZone.innerHTML = "<p>업로드할 파일: " + files[0].name + "</p>";
+        }
+    });
+
+    // 파일 선택을 통해 파일이 변경되었을 때 드롭존의 메시지도 변경
+    fileInput.addEventListener('change', function (e) {
+        if (fileInput.files.length > 0) {
+            dropZone.innerHTML = "<p>업로드할 파일: " + fileInput.files[0].name + "</p>";
+        } else {
+            dropZone.innerHTML = "<p>파일을 여기에 드래그 앤 드롭하세요.</p>";
+        }
+    });
+
+    // 드래그 앤 드롭 관련 스크립트 추가 완료.
+
+
+    </script>
+</body>
+</html>
+
