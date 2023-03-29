@@ -11,7 +11,112 @@ from pydub import AudioSegment
 from transformers import PreTrainedTokenizerFast, BartForConditionalGeneration
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Summary
+from .forms import SummaryForm
 
+def save_summary(request):
+    if request.method == "POST":
+        title = request.POST.get("title")
+
+        input_text = request.POST.get("input_text", "").strip()
+        youtube_url = request.POST.get("youtube_url", "").strip()
+        video_file = request.FILES.get("video_file", None)
+
+        if input_text:
+            # 텍스트 입력이 있는 경우
+            original_text = input_text
+            # 긴 텍스트를 요약하는 함수 사용
+            summary_text = summarize_long_text(original_text)
+            timeline_text = "타임라인 정보가 없습니다."
+        elif youtube_url:
+            # 유튜브 링크 입력이 있는 경우
+            youtube = pytube.YouTube(youtube_url)
+            video = youtube.streams.first()
+            video.download()
+
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            whispermodel = whisper.load_model("small", device=device)
+            result = whispermodel.transcribe(video.default_filename)
+            original_text = result["text"]
+            segments = result["segments"]
+
+            timeline_text = create_timelined_text(segments)
+            summary_text = summarize_long_text(original_text)
+
+            os.remove(video.default_filename)
+        elif video_file:
+            # 파일 업로드가 있는 경우
+            file_name = default_storage.save(video_file.name, ContentFile(video_file.read()))
+            file_path = default_storage.path(file_name)
+
+            #whisper로 자막화 하는 코드
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            whispermodel = whisper.load_model("small", device=device)
+            result = whispermodel.transcribe(file_path)
+            original_text = result["text"]
+            segments = result["segments"]
+
+            timeline_text = create_timelined_text(segments)
+            summary_text = summarize_long_text(original_text)
+
+            # 업로드 된 파일 삭제
+            default_storage.delete(file_path)
+        else:
+            return redirect('summary_list')
+
+        summary = Summary(title=title, original_text=original_text, timeline_text=timeline_text, summary_text=summary_text)
+        summary.save()
+
+        return redirect('summary_list')
+    else:
+        return redirect('summary_list')
+
+
+
+def summary_list(request):
+    summaries = Summary.objects.all()
+    return render(request, 'summary_list.html', {'summaries': summaries})
+
+def summary_detail(request, summary_id):
+    summary = get_object_or_404(Summary, pk=summary_id)
+    return render(request, 'summary_detail.html', {'summary': summary})
+
+def summary_create(request):
+    if request.method == "POST":
+        form = SummaryForm(request.POST)
+        if form.is_valid():
+            summary = form.save()
+            return redirect('summary_detail', summary_id=summary.pk)
+    else:
+        form = SummaryForm()
+    return render(request, 'summary_form.html', {'form': form})
+
+def summary_edit(request, summary_id):
+    summary = get_object_or_404(Summary, pk=summary_id)
+    if request.method == "POST":
+        form = SummaryForm(request.POST, instance=summary)
+        if form.is_valid():
+            summary = form.save()
+            return redirect('summary_detail', summary_id=summary.pk)
+    else:
+        form = SummaryForm(instance=summary)
+    return render(request, 'summary_form.html', {'form': form})
+
+def summary_delete(request, summary_id):
+    summary = get_object_or_404(Summary, pk=summary_id)
+    summary.delete()
+    return redirect('summary_list')
+
+def delete_summaries(request):
+    if request.method == 'POST':
+        summary_ids = request.POST.getlist('delete-summaries')
+        for summary_id in summary_ids:
+            summary = Summary.objects.get(pk=summary_id)
+            summary.delete()
+        return redirect('summary_list')
+    else:
+        return HttpResponse("Invalid request")
 
 tokenizer = PreTrainedTokenizerFast.from_pretrained('digit82/kobart-summarization')
 model = BartForConditionalGeneration.from_pretrained('digit82/kobart-summarization')

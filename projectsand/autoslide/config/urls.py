@@ -20,4 +20,12 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('testword/', views.summarizer, name="summarizer"),
     path('testyoutube/', views.summarizer2, name="summarizer2"),
+    path('summaries/', views.summary_list, name='summary_list'),
+    path('summaries/<int:summary_id>/', views.summary_detail, name='summary_detail'),
+    path('summaries/create/', views.summary_create, name='summary_create'),
+    path('summaries/<int:summary_id>/edit/', views.summary_edit, name='summary_edit'),
+    path('summaries/<int:summary_id>/delete/', views.summary_delete, name='summary_delete'),
+    path('summary/<int:pk>/', views.summary_detail, name='summary_detail'),
+    path('save_summary/', views.save_summary, name='save_summary'),
+    path('delete_summaries/', views.delete_summaries, name='delete_summaries'),
 ]

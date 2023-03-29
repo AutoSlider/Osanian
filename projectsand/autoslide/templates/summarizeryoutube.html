@@ -60,25 +60,9 @@
     </select>
     <div class="scrollable-box" id="content-display">
     </div>
-    <h2>Summary Board</h2>
-    <table>
-      <tr>
-        <th>Author</th>
-        <th>Original Text</th>
-        <th>Summarized Text</th>
-        <th>Created At</th>
-      </tr>
-      {% for summary in summaries %}
-      <tr>
-        <td>{{ summary.author }}</td>
-        <td>{{ summary.original_text|truncatewords:20 }}</td>
-        <td>{{ summary.summarized_text|truncatewords:20 }}</td>
-        <td>{{ summary.created_at }}</td>
-      </tr>
-      {% endfor %}
-    </table>
 
     <script>
+    // 드롭다운 메뉴 변경 이벤트 핸들러
     document.getElementById("service-selector").addEventListener("change", function() {
     var selectedValue = this.value;
 
