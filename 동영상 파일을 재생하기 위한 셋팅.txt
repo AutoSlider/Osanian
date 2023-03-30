@@ -1,0 +1,43 @@
+동영상 파일을 재생하기 위한 셋팅
+settigns.py:
+TEMPLATES = [
+    {
+         ...
+        'OPTIONS': {
+            'context_processors': [
+                 ...
+
+			#추가
+                'django.template.context_processors.media',
+            ],
+        },
+    },
+]
+
+맨 밑에
+
+STATIC_URL = '/static/'
+
+#추가
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+
+
+urls.py:
+
+urlpatterns = [
+			...
+		]
+
+#추가
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+html
+기존 코드 :
+<source src="{{ summary.file.url }}" type="video/mp4">
+변경 코드 :
+<source src="{{ MEDIA_URL }}{{ summary.file }}" type="video/mp4">

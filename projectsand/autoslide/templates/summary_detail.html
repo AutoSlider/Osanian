@@ -3,8 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+    <style>
+        .row {
+            height: 50%;
+        }
+        .col {
+            height: 100%;
+            overflow-y: scroll;
+        }
+    </style>
+    <script>
+        function showText(radio) {
+            if (radio.value === "original") {
+                document.getElementById("original_text").style.display = "block";
+                document.getElementById("summary_text").style.display = "none";
+            } else {
+                document.getElementById("original_text").style.display = "none";
+                document.getElementById("summary_text").style.display = "block";
+            }
+        }
+    </script>
 </head>
 <body>
+{% load custom_filters %}
+    <nav>
+        <h1>{{ summary.title }}</h1>
+        <p>작성일: {{ summary.created_at }}</p>
+        <p>수정일: {{ summary.updated_at }}</p>
+    </nav>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <h2>Video</h2>
+                {% if summary.file %}
+                    <video width="100%" height="100%" controls>
+                        <source src="{{ MEDIA_URL }}{{ summary.file }}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                {% elif summary.youtube_url %}
+                <iframe width="100%" height="auto" src="https://www.youtube.com/embed/{{ summary.youtube_url|get_youtube_id }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                {% endif %}
+                <h2>Timeline</h2>
+                <pre>{{ summary.timeline_text }}</pre>
+            </div>
+            <div class="col">
+                <h2>원문 / 요약 내용 선택</h2>
+                <input type="radio" id="original_radio" name="text_type" value="original" onclick="showText(this)" checked>
+                <label for="original_radio">원문</label>
+                <input type="radio" id="summary_radio" name="text_type" value="summary" onclick="showText(this)">
+                <label for="summary_radio">요약 내용</label>
 
+                <div id="original_text" style="display: block;">
+                    <h2>원문</h2>
+                    <p>{{ summary.original_text }}</p>
+                </div>
+                <div id="summary_text" style="display: none;">
+                    <h2>요약 내용</h2>
+                    <p>{{ summary.summary_text }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <form method="post">
+                    {% csrf_token %}
+                    <h2>메모</h2>
+                    <textarea name="note" rows="5" cols="40">{{ summary.note }}</textarea><br>
+                    <input type="submit" value="변경 사항 저장">
+                </form>
+            </div>
+            <div class="col">
+                <a href="{% url 'summary_delete' summary.id %}" class="btn btn-danger btn-sm" onclick="return confirm('정말 삭제하시겠습니까?');">삭제</a>
+                <a href="{% url 'summary_list' %}" class="btn btn-secondary btn-sm">목록으로 돌아가기</a>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

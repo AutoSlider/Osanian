@@ -14,7 +14,11 @@ from django.core.files.base import ContentFile
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Summary
 from .forms import SummaryForm
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
 
+
+@login_required
 def save_summary(request):
     if request.method == "POST":
         title = request.POST.get("title")
@@ -22,6 +26,8 @@ def save_summary(request):
         input_text = request.POST.get("input_text", "").strip()
         youtube_url = request.POST.get("youtube_url", "").strip()
         video_file = request.FILES.get("video_file", None)
+        note = request.POST.get("note", "").strip()
+        summary_file = None  # summary_file 변수를 여기에 선언하고 기본값을 None으로 설정
 
         if input_text:
             # 텍스트 입력이 있는 경우
@@ -59,13 +65,23 @@ def save_summary(request):
 
             timeline_text = create_timelined_text(segments)
             summary_text = summarize_long_text(original_text)
+            summary_file = video_file
 
-            # 업로드 된 파일 삭제
+            # 업로드 된 파일 삭제 안했더니 이중으로 쌓이네...
             default_storage.delete(file_path)
         else:
             return redirect('summary_list')
 
-        summary = Summary(title=title, original_text=original_text, timeline_text=timeline_text, summary_text=summary_text)
+        summary = Summary(
+            user=request.user,  # user 필드 추가
+            title=title,
+            original_text=original_text,
+            timeline_text=timeline_text,
+            summary_text=summary_text,
+            note=note,  # note 필드 추가
+            file=summary_file if summary_file else None,  # file 필드 추가
+            youtube_url=youtube_url if youtube_url else None,  # youtube_url 필드 추가
+        )
         summary.save()
 
         return redirect('summary_list')
@@ -75,12 +91,29 @@ def save_summary(request):
 
 
 def summary_list(request):
-    summaries = Summary.objects.all()
+    # 현재 로그인한 사용자와 연결된 Summary 모델 인스턴스만 가져오도록 수정
+    summaries = Summary.objects.filter(user=request.user)
     return render(request, 'summary_list.html', {'summaries': summaries})
 
+@login_required
 def summary_detail(request, summary_id):
     summary = get_object_or_404(Summary, pk=summary_id)
+
+    # 로그인한 사용자와 요약 작성자가 일치하지 않으면 에러 페이지 반환
+    if request.user != summary.user:
+        return HttpResponseForbidden("You are not allowed to view this summary.")
+
+    # POST 요청일 경우, 변경된 내용을 저장
+    if request.method == 'POST':
+        summary.original_text = request.POST.get('original_text')
+        summary.timeline_text = request.POST.get('timeline_text')
+        summary.summary_text = request.POST.get('summary_text')
+        summary.note = request.POST.get('note')
+        summary.save()
+        return redirect('summary_detail', summary_id=summary_id)
+
     return render(request, 'summary_detail.html', {'summary': summary})
+
 
 def summary_create(request):
     if request.method == "POST":

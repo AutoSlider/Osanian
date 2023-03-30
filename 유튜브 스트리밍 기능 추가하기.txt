@@ -1,0 +1,78 @@
+유튜브 스트리밍 기능 추가하기
+
+models.py:
+class Summary(models.Model):
+    # ... (다른 필드들)
+    youtube_url = models.URLField(blank=True, null=True)  # youtube_url 
+
+python manage.py makemigrations
+python manage.py migrate
+
+
+views.py:
+        summary = Summary(
+            user=request.user,  # user 필드 추가
+            title=title,
+            original_text=original_text,
+            timeline_text=timeline_text,
+            summary_text=summary_text,
+            note=note,  # note 필드 추가
+            file=summary_file if summary_file else None,  # file 필드 추가
+            youtube_url=youtube_url if youtube_url else None,  # youtube_url 필드 추가
+        )
+        summary.save()
+
+html:
+<!-- 기존의 <video> 태그를 다음과 같이 변경하세요. -->
+{% if summary.file %}
+    <video width="100%" height="auto" controls>
+        <source src="{{ summary.file.url }}" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+{% elif summary.youtube_url %}
+    <iframe width="100%" height="auto" src="https://www.youtube.com/embed/{{ summary.youtube_url|get_youtube_id }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+{% endif %}
+
+
+templatetags/custom_filters.py 해당 APP 폴더에 templatetags폴더 생성 후 custom_filters.py 생성
+//
+from django import template
+import re
+
+register = template.Library()
+
+def get_youtube_id(value):
+    youtube_id_match = re.search(r'(?<=v=)[^&#]+', value)
+    youtube_id_match = youtube_id_match or re.search(r'(?<=be/)[^&#]+', value)
+    trailer_id = youtube_id_match.group(0) if youtube_id_match else None
+    return trailer_id
+
+register.filter('get_youtube_id', get_youtube_id)
+//
+
+
+html에 필터 호출
+{% load custom_filters %}
+
+
+interpreter에서
+pytube 설치 안 하면 에러남...
+
+
+settings.py :
+TEMPLATES = [
+    {
+        ...
+        'OPTIONS': {
+            'context_processors': [
+                ...
+            ],
+			#추가
+            'libraries': {
+                'custom_filters': 'your_app_name.templatetags.custom_filters',
+            }
+        },
+    },
+]
+
+

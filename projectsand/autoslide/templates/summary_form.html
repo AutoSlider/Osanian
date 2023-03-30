@@ -1,10 +1,65 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+  <title>My Website</title>
+  <style>
+    /* 전체 페이지를 가로 세로 중앙 정렬합니다. */
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* 페이지를 4분할합니다. */
+    .container {
+      width: 80%;
+      height: 80%;
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    .item {
+      width: 50%;
+      height: 50%;
+      box-sizing: border-box;
+      border: 1px solid black;
+      transition: visibility 0.5s ease;
+    }
+
+    .hidden {
+      visibility: hidden;
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <div class="item top-left">Top-Left</div>
+    <div class="item top-right">Top-Right</div>
+    <div class="item bottom-left">Bottom-Left</div>
+    <div class="item bottom-right">Bottom-Right</div>
+  </div>
 
+  <script>
+    // 창 크기를 검사하여 왼쪽 아이템만 보이도록 클래스를 추가/삭제합니다.
+    function checkWindowSize() {
+      var container = document.querySelector('.container');
+      var leftItem = document.querySelector('.top-left');
+      var rightItem = document.querySelector('.top-right');
+      if (window.innerWidth < container.offsetWidth * 0.5) {
+        rightItem.classList.add('hidden');
+      } else {
+        rightItem.classList.remove('hidden');
+      }
+    }
+
+    // 창 크기가 변경될 때마다 함수를 호출합니다.
+    window.addEventListener('resize', checkWindowSize);
+
+    // 페이지가 로드될 때 한번 호출합니다.
+    checkWindowSize();
+  </script>
 </body>
 </html>
