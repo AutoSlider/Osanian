@@ -262,12 +262,21 @@ def summarizer2(request):
         return render(request, "summarizeryoutube.html")
 
 
+# def create_timelined_text(segments):
+#     timelined_text = []
+#     for segment in segments:
+#         start_time = round(segment['start'], 2)
+#         end_time = round(segment['end'], 2)
+#         text = segment['text']
+#         timelined_text.append(f"{start_time}-{end_time}\n{text}")
+#     return "\n".join(timelined_text)
+
 def create_timelined_text(segments):
     timelined_text = []
     for segment in segments:
-        start_time = round(segment['start'], 2)
-        end_time = round(segment['end'], 2)
-        text = segment['text']
-        timelined_text.append(f"{start_time}-{end_time}\n{text}")
+        segment_start = round(segment['start'], 2)
+        segment_text = segment['text']
+        segment_t = round(segment_start, 2)
+        segment_text_with_t = f'<span t="{segment_t}" data-lexical-text="true" style="" onclick="seekToTimestamp(\'{segment_t}\');">{segment_text}</span>'
+        timelined_text.append(segment_text_with_t)
     return "\n".join(timelined_text)
-
