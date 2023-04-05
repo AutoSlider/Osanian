@@ -1,7 +1,7 @@
 """config URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/3.1/topics/http/urls/
+    https://docs.djangoproject.com/en/4.1/topics/http/urls/
 Examples:
 Function views
     1. Add an import:  from my_app import views
@@ -14,27 +14,32 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
-from testsumury import views
-from django.contrib.auth.views import LoginView, LogoutView
-from django.conf import settings
-from django.conf.urls.static import static
+from django.urls import path, include
+
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('testword/', views.summarizer, name="summarizer"),
-    path('testyoutube/', views.summarizer2, name="summarizer2"),
-    path('summaries/', views.summary_list, name='summary_list'),
-    #path('summary/<int:summary_id>/', views.summary_detail, name='summary_detail'),  # 'int:pk'를 'int:summary_id'로 변경
-    path('summaries/<int:summary_id>/', views.summary_detail, name='summary_detail'),
-    path('summaries/create/', views.summary_create, name='summary_create'),
-    path('summaries/<int:summary_id>/edit/', views.summary_edit, name='summary_edit'),
-    path('summaries/<int:summary_id>/delete/', views.summary_delete, name='summary_delete'),
-    #path('summary/<int:pk>/', views.summary_detail, name='summary_detail'),
-    path('save_summary/', views.save_summary, name='save_summary'),
-    path('delete_summaries/', views.delete_summaries, name='delete_summaries'),
-    path('login/', LoginView.as_view(), name='login'),
-    path('logout/', LogoutView.as_view(), name='logout'),
+    path('', include('common.urls', 'common')), # '/' 에 해당되는 path
+    path('', include('boards.urls', 'boards')),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# from django.contrib import admin
+# from django.urls import path, include
+# from django.conf import settings
+# from django.conf.urls.static import static
+# from django.views.generic.base import TemplateView
+# from common import views
+
+# urlpatterns = [
+#     path('admin/', admin.site.urls),
+#     # path('', views.IndexView.as_view(), name='index'),  # '/' 에 해당되는 path
+#     # path('common/', include(('common.urls', 'common'))),
+#     # path('common/', include('django.contrib.auth.urls')),
+#     # path('care/', include('care.urls')), # 요양원&리뷰
+#     path('', include(('common.urls', 'common'))),
+#     path('common/', include('django.contrib.auth.urls')),
+#     path('care/', include('care.urls')), # 요양원&리뷰
+#     path('care/', include('django.contrib.auth.urls')),
+# ]
+

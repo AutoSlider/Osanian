@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="profile container-fluid">
+    <h1 class="logo">
+        <a href="{% url 'common:login' %}"><img id="logo_img" src="{% static 'img/logo3.png' %}" class="img-fluid"></a>
+    </h1>
+    <div class="profile_content ">
+        <form method="post" action="{% url 'common:profile' %}" id="profile_form" onsubmit="{% url 'boards:board_list' %}">
+        {% csrf_token %}
+        {% include "form_errors.html" %}
+            {% if new_password1 != new_password2 %}
+                <div class="text-bg-warning p-3" onclick="validchk()">"새 비밀번호"와 "새 비밀번호(확인)"이 일치하지 않습니다.</div>
+            {% endif %}
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="username">아이디</span>
+                <input name="username" type="text" class="form-control" value="{{ form.instance.username }}" aria-label="Username" aria-describedby="basic-addon1" required readonly>
+            </div>
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="phone">핸드폰</span>
+                <input name="phone" type="text" class="form-control" value="{{ form.instance.phone }}" aria-label="Username" aria-describedby="basic-addon1" required>
+            </div>
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="email">이메일</span>
+                <input name="email" type="text" class="form-control" value="{{ form.instance.email }}" aria-label="Username" aria-describedby="basic-addon1" required>
+            </div>
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="nickname">닉네임</span>
+                <input  name="nickname" type="text" class="form-control" value="{{ form.instance.nickname }}" aria-label="Username" aria-describedby="basic-addon1" required>
+            </div>
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="current_password">기존 비밀번호</span>
+                <input name="current_password" type="password" class="form-control" aria-label="Username" aria-describedby="basic-addon1" required>
+            </div>
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="new_password1">새 비밀번호</span>
+                <input name="new_password1" type="password" class="form-control" aria-label="new_password1" aria-describedby="basic-addon1" minlength="8" required>
+            </div>
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="new_password2">새 비밀번호(확인)</span>
+                <input name="new_password2" type="password" class="form-control" aria-label="new_password2" aria-describedby="basic-addon1" required>
+            </div>
+            <div id="login_div">
+                <button type="submit" form="profile_form" class="btn btn-secondary btn-lg">변경하기</button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- 푸터 -->
+{% include 'footer.html' %}
+{% endblock %}
+<script>
+const password = document.getElementById('new_password1');
+const confirm_password = document.getElementById('new_password2');
+
+pwdvalidchk() {
+  if (password.value !== confirm_password.value) {
+    alert("'새 비밀번호'와 '새 비밀번호(확인)'이 다릅니다.");
+    return false;
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+{% block content %}
+<!-- S: board_list.html --><!-- 해당 페이지는 login한 유저만 들어올 수 있도록 view에서 처리됨. -->
+{% load static %}
+{% include "navbar.html" %}
+<section class="board_list container-fluid">
+  {% if  request.resolver_match.url_name == 'board_list' %}
+  <!-- 메인보드 -->
+  <h2>메인 보드</h2>
+  <!-- 검색 -->
+  <div class="searchSection">
+    <form id="search_board_list" method="get" action="{% url 'boards:board_list' %}">
+      <div class="form-group row">
+        <div class="col btnarea">
+          <button type="submit" form="search_board_list" class="btn btn-primary"><strong class="fa fa-search"><span class="modal hide">검색</span></strong></button>
+        </div>
+        <div class="col searcharea">
+            <input type="text" name="q" class="form-control" placeholder="검색어를 입력하세요." value="{{ q }}">
+        </div>
+      </div>
+    </form>
+  </div>
+  <!-- 결과 -->
+  <div class="list_result">
+    {% if board_list %}
+    <form method="POST" id="user_board_list" action="{% url 'boards:board_list' %}">
+      {% csrf_token %}
+      {% include "form_errors.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>
+                <input type="checkbox" id="boards_all" name="board_ids" value="{{ board_list.all.0.id }}-{{ board_list.all.last.id }}"> <!-- 전체 선택 -->
+                <label for="boards_all"><strong>생성일자</strong></label>
+              </th>
+              <th>
+                <strong>보드 이름</strong>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for board in board_list %}
+            <tr>
+              <td>
+                <input type="checkbox" id="{{ board.id }}" name="board_ids" value="{{ board.id }}">
+                <label for="{{ board.id }}">{{ board.created_at }}</label>
+              </td>
+              <td>
+                <p class="board_tit"><a href="{% url 'boards:board_detail' board.id %}">{{ board.title }}</a></p>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="btnarea"><button type="submit" form="user_board_list" class="btn btn-danger">삭제하기</button></p>
+    </form>
+    {% else %}
+    <p class="no_result">목록이 존재하지 않습니다.</p>
+    {% endif %}
+  </div>
+  {% elif request.resolver_match.url_name == 'favorite_board_list' %}
+  <!-- 즐겨찾기 -->
+  <h2>즐겨찾기</h2>
+  <!-- 검색 -->
+  <div class="searchSection">
+    <form id="search_fav_list" method="GET" action="{% url 'boards:favorite_board_list' %}">
+      <div class="form-group row">
+        <div class="col btnarea">
+          <button type="submit" form="search_fav_list" class="btn btn-primary"><strong class="fa fa-search"><span class="modal hide">검색</span></strong></button>
+        </div>
+        <div class="col searcharea">
+            <input type="text" name="q" class="form-control" placeholder="검색어를 입력하세요." value="{{ q }}">
+        </div>
+      </div>
+    </form>
+  </div>
+  <!-- 결과 -->
+  <div class="list_result">
+    {% if favorite_board_list %}
+    <form method="POST" id="user_fav_list" action="{% url 'boards:favorite_board_list' %}">
+      {% csrf_token %}
+      {% include "form_errors.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>
+                <input type="checkbox" id="boards_fav_all" name="board_fav_ids" value="{{ favorite_board_list.all.0.id }}-{{ favorite_board_list.all.last.id }}"> <!-- 전체 선택 -->
+                <label for="boards_fav_all"><strong>생성일자</strong></label>
+              </th>
+              <th>
+                <strong>보드 이름</strong>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for board_fav in favorite_board_list %}
+            <tr>
+              <td>
+                <input type="checkbox" id="{{ board_fav.id }}" name="board_fav_ids" value="{{ board_fav.id }}">
+                <label for="{{ board_fav.id }}">{{ board_fav.created_at }}</label>
+              </td>
+              <td>
+                <p class="board_tit"><a href="{% url 'boards:board_detail' board_fav.id %}">{{ board_fav.title }}</a></p>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="btnarea"><button type="submit" form="user_fav_list" class="btn btn-danger">즐겨찾기 해제</button></p>
+    </form>
+    {% else %}
+    <p class="no_result">목록이 존재하지 않습니다.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+</section>
+<footer class="footer bg-light">
+  <div class="rows">
+    <div class="rights"><p class="copyright">Copyright @ AutoSlider Since 2022</p></div>
+    <ul class="info">
+      <li><strong>팀명 :</strong>팀_안드</li>
+      <li><strong>서비스 문의 :</strong><a href="mailto:admin@autoslider.com" class="mailto">admin@autoslider.com</a></li>
+    </ul>
+    <ul class="links">
+      <li><a class="btn btn-outline-light btn-floating m-1" href="https://github.com/AutoSlider/total" target="_blank" role="button"><img src="{% static 'img/icons/png/github-mark.png' %}" alt="gitHub linke" /></a></li>
+      <li><a class="btn btn-outline-light btn-floating m-1" href="mailto:admin@autoslider.com" target="_blank" role="button"><img src="{% static 'img/icons/png/email.png' %}" alt="mail" /></a></li>
+    </ul>
+  </div>
+</footer>
+<!-- S: 새 보드 만들기 Modal popup-->
+<section id="newBoardModal" class="modal fade file-upload" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content modal_popup">
+      <div class="modal-header">
+        <h4 class="modal-title">새 보드 만들기</h4>
+        <button type="button" class="fa fa-close closeBtn" data-dismiss="modal" aria-hidden="true"><strong class="modal hide">닫기</strong></button>
+      </div>
+      <div class="modal-body">
+        <form id="newBoardForm" method="post" action="{% url 'boards:board_create' %}" onsubmit="console.log('newBoardForm submitted')">
+        {% csrf_token %}
+        {% include "form_errors.html" %}
+          <!-- 입력 방법 -->
+          <div class="select_type">
+            <label for="selectInput">입력 방법에 대해 선택해 주세요.</label>
+            <select id="selectInput" class="form-control input_type" name="input_type" onchange="selectType()">
+              <option value="input_text">텍스트 요약</option>
+              <option value="input_youtube">Youtube 영상 링크 입력</option>
+              <option value="input_video">영상 파일 업로드</option>
+            </select>
+          </div>
+          <!-- 입력 방법에 따른 목록 -->
+          <div class="form-group input_text opt">
+            <label for="input_text" class="modal">텍스트 요약:</label>
+            <div class="inputarea">
+              <textarea id="input_text" class="form-control selected_input" name="input_text" placeholder="요약할 텍스트를 입력해주세요." cols="30" rows="10"></textarea>
+            </div>
+          </div>
+          <div class="form-group input_youtube opt">
+            <label for="input_youtube" class="modal hide">Youtube 영상 링크 입력:</label>
+            <div class="inputarea">
+              <input type="text" id="input_youtube" class="form-control selected_input" name="input_youtube" placeholder="유튜브 링크 입력하기" onchange="validateYoutubeLink()" />
+            </div>
+            <strong class="youtube_validation_msg"></strong>
+          </div>
+          <div class="form-group input_video opt">
+            <label for="input_video">
+              <span><strong class="fa fa-plus"></strong><p>내 파일을 클릭하세요</p><p>자신이 원하는 .mp4 혹은 .wav 영상을 추가하세요</p></span>
+              <p class="uploadchk"></p>
+            </label>
+            <div class="inputarea">
+              <input type="file" id="input_video" class="form-control selected_input form-control-file" name="input_video" accept=".wav,.mp4,.mp3" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <ul class="btnarea">
+              <li><button type="submit" form="newBoardForm" class="btn btn-primary" onclick="console.log('newBoardForm submit button clicked')">적용하기</button></li>
+              <li><button type="button" class="btn btn-secondary closeBtn" data-dismiss="modal">취소</button></li>
+            </ul>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- Modal popup JavaScript -->
+<script type="text/javascript" >
+  function showNewBoardModal() {
+    var newBoardForm = $("#newBoardForm");
+    //console.log("showNewBoardModal() raise!");
+    $("#newBoardModal").modal("show");
+    $("#selectInput option:eq(0)").prop("selected",true);
+    $(".opt").hide();
+    // show first element only and clear values
+    $(`.opt:eq(0)`).show();
+    $(".opt").not(":eq(0)").find('.selected_input').val("").text("");
+  }
+  $("#newBoardBtn").on("click", showNewBoardModal);
+
+  // file valid check
+  $('.form-control-file').change( function() {
+    var this_val = $(this).val();
+    if(window.FileReader){  // modern browser
+      var filename = $(this)[0].files[0].name;
+    }else {  // old IE
+      var filename = $(this).val().split('/').pop().split('\\').pop();  // 파일명만 추출
+    }
+    $('.uploadchk').text(filename+' 파일 업로드 확인 되었습니다.').css("color", "blue");
+  });
+
+  // youtube link validator
+  function validateYoutubeLink() {
+    //console.log("validateYoutubeLink raise");
+    const youtubeInput = $("#input_youtube").val();
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)\/(watch\?v=|embed\/|v\/|.+\?v=)?([^&=%\?]{11})/;
+    var css_conf = {
+      "display":"block",
+      "width": "100%",
+      "padding": "10px",
+      "font-weight": "bold"
+    };
+
+    $(".youtube_validation_msg").css(css_conf);
+    if (youtubeRegex.test(youtubeInput)) {
+        console.log(youtubeInput, "Valid");
+        $(".youtube_validation_msg").text("해당 유튜브 링크가 적절한 포맷입니다.");
+        $(".youtube_validation_msg").css({"color": "green"});
+    } else {
+        console.log(youtubeInput, "Invalid");
+        $(".youtube_validation_msg").text("해당 유튜브 링크 포맷이 적절하지 않습니다.");
+        $(".youtube_validation_msg").css({"color": "red"});
+    };
+  };
+
+  // selectType()
+  function selectType(){
+    var selected = $("#selectInput").val();
+    var selectedIndexNum = $("#selectInput").prop('selectedIndex');
+    $(".opt").hide();
+    $(".youtube_validation_msg").text("");
+    $(`.opt:eq(${selectedIndexNum})`).show();
+    $(".opt").not(`:eq(${selectedIndexNum})`).find('.selected_input').val("").text("");
+  };
+
+  // close
+  $(".closeBtn").on("click", function() {
+    console.log('.closeBtn onclick raise')
+    $(".opt").hide();
+    $(".youtube_validation_msg").text("");
+    $(".opt").find('.selected_input').val("").text("");
+  });
+</script>
+<!-- E: 새 보드 만들기 Modal popup-->
+<!-- E: board_list.html -->
+{% endblock %}

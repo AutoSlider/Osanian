@@ -1,0 +1,36 @@
+{% block content %}
+<!-- S: login.html -->
+<div class="container my-3 userform">
+    <h1>회원 가입</h1>
+    <form method="post" action="{% url 'common:signup' %}">
+        {% csrf_token %}
+        {% include "form_errors.html" %}
+        <div class="mb-3">
+            <label for="username" class="userform_label">사용자ID</label>
+            <input type="text" class="form-control" name="username" id="username" value="{{ form.username.value|default_if_none:'' }}" title="20자 이하 문자, 숫자 그리고 @/./+/-/_만 가능합니다." required>
+        </div>
+        <div class="mb-3">
+            <label for="password1" class="userform_label">비밀번호</label>
+            <input type="password" class="form-control" name="password1" id="password1" value="{{ form.password1.value|default_if_none:'' }}" minlength="8" pattern="^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,16}$" title="비밀번호는 최소 8자여야 하며, 숫자 및 영문과 특수문자($@$!%*#?&) 조합이어야 합니다. 또한 다른 개인정보와 유사해서는 안됩니다." required>
+        </div>
+        <div class="mb-3">
+            <label for="password2" class="userform_label">비밀번호 확인</label>
+            <input type="password" class="form-control" name="password2" id="password2" value="{{ form.password2.value|default_if_none:'' }}" minlength="8" pattern="^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,16}$" placeholder="확인을 위해 이전과 동일한 비밀번호를 입력하세요." required>
+        </div>
+        <div class="mb-3">
+            <label for="nickname" class="userform_label">닉네임</label>
+            <input type="text" class="form-control" name="nickname" id="username" value="{{ form.nickname.value|default_if_none:'' }}" title="20자 이하 문자, 숫자 만 가능합니다." required>
+        </div>
+        <div class="mb-3">
+            <label for="phone" class="userform_label">휴대폰번호</label>
+            <input type="text" class="form-control" name="phone" id="phone" value="{{ form.phone.value|default_if_none:'' }}" pattern="^01([016789])([0-9]{7,8})$" placeholder="01012345678 형식으로 입력해주세요." required>
+        </div>
+        <div class="mb-3">
+            <label for="email" class="userform_label">이메일</label>
+            <input type="email" class="form-control" name="email" id="email" value="{{ form.email.value|default_if_none:'' }}" placeholder="example@test.com" required>
+        </div>
+        <button type="submit" class="btn btn-primary">회원가입</button>
+    </form>
+</div>
+<!-- E: login.html -->
+{% endblock %}

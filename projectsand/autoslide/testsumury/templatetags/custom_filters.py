@@ -21,7 +21,7 @@ def get_youtube_id(value):
 
 @register.filter
 def add_timestamp_links(text):
-    lines = text.split('\n')
+    #lines = text.split('\n')
     result = []
     for line in lines:
         parts = line.split(' ')

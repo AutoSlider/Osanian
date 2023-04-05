@@ -47,12 +47,8 @@
                 </div>
                 {% endif %}
                 <h2>Timeline</h2>
-                <div>
-                  <span t="1.0">예제 텍스트 1</span>
-                  <span t="2.0">예제 텍스트 2</span>
-                  <span t="20.0" data-lexical-text="true" style="" onclick="seekToTimestamp('20.0');">예제 텍스트 3</span>
-                    <pre>{{ summary.timeline_text|add_timestamp_links }}</pre>
-                </div>
+                <pre>{{ summary.timeline_text|add_timestamp_links }}</pre>
+
 
             </div>
             <div class="col">

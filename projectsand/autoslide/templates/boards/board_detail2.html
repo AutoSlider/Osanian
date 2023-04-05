@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+{% load custom_filters %}
+<section class="board_detail {{ object.input_type }}">
+    <div class="toparea">
+        <h3 class="tit">{{ object.title }}</h3>
+        <ul class="btnarea">
+            {% if object.input_type != "input_text" %}
+            <li><a href="#" class="btn btn-primary">스크랩 찾기</a></li>
+            {% endif %}
+            <li>
+                <form method="post" id="fav_modify" action="{% url 'boards:modifiy_favorite' object.pk %}">
+                    {% csrf_token %}
+                    {% include "form_errors.html" %}
+                    <button type="submit" form="fav_modify" class="btn btn-primary">
+                        {% if object.favorite %} 즐겨찾기 삭제 {% else %} 즐겨찾기 추가 {% endif%}
+                    </button>
+                </form>
+            </li>
+            <li><a href="#" class="btn btn-primary">저장하기</a></li>
+            <li class="goback"><a href="{% url 'boards:board_list' %}">목록으로 돌아가기</a></li>
+        </ul>
+    </div>
+    <div class="detail_content">
+    {% if object.input_type == "input_text" %}
+    <div class="input_text">
+        <h4 class="txt_tit">{{ object.title }} 에 작성된 텍스트의 전문/요약문입니다.</h4>
+        <div id="wholeText" class="textSection">
+            <div class="toggleBtn">
+                <label class="switch">
+                    <input type="checkbox" id="toggleText" />
+                    <span class="slider round"></span>
+                </label>
+                <span class="opt total_text on">전문</span><span class="opt summary_text">요약문</span>
+            </div>
+            <div class="content on">{{ object.total_text|linebreaks }}</div>
+            <div class="content ">{{ object.summary_text|linebreaks }}</div>
+        </div>
+        <div class="notearea">
+            note area 추가 예정
+        </div>
+    </div>
+
+    {% elif object.input_type == "input_youtube" %}
+    <div class="videos">
+        <h4>{{ object.title }}</h4>
+        <div class="videoSection">
+            <div id="player"></div>
+            <div id="timeline"></div>
+        </div>
+        <div class="textSection">
+            <div>
+        <pre>{{ object.timeline_text|add_timestamp_links }}</pre>
+            </div>
+            <div class="txt">
+                <div class="toggleBtn">
+                    <label class="switch">
+                        <input type="checkbox" id="toggleText" />
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="opt total_text on">전문</span><span class="opt summary_text">요약문</span>
+                </div>
+                <div class="content on">{{ object.total_text|linebreaks }}</div>
+                <div class="content ">{{ object.summary_text|linebreaks }}</div>
+            </div>
+            <div class="notes"></div>
+        </div>
+    </div>
+
+    {% elif object.input_type == "input_video" %}
+    <div class="videos">
+        <h4>{{ object.title }}</h4>
+        <p class="input_video">{{ object.input_video.url }}</p>
+        <div id="player" class="videoSection">
+            <video width="320" height="240" controls>
+                <source src="{{ MEDIA_URL }}{{ object.input_video }}" type="video/mp4">
+            </video>
+        </div>
+        <div class="textSection">
+            <div class="toggleBtn">
+                <label class="switch">
+                    <input type="checkbox" id="toggleText" />
+                    <span class="slider round"></span>
+                </label>
+                <span class="opt total_text on">전문</span><span class="opt summary_text">요약문</span>
+            </div>
+            <div class="content on">{{ object.total_text|linebreaks }}</div>
+            <div class="content ">{{ object.summary_text|linebreaks }}</div>
+        </div>
+    </div>
+    {% endif %}
+    </div>
+</section>
+<!-- html iframe 으로 youtube video 삽입 -->
+<script type="text/javascript">
+function youtubeUrlValidation(url) {
+    const youtubeRegex = /(https?:\/\/)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)\/(watch\?v=|embed\/|v\/|.+\?v=)?([^&=%\?]{11})/;
+    const youtubeRegexMatch = url.match(youtubeRegex);
+    if (youtubeRegexMatch) { return youtubeRegexMatch[6]; }
+    return null;
+}
+// 유튜브 API를 비동기적으로 로드합니다.
+var tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
+var firstScriptTag = document.getElementsByTagName('script')[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+var player;
+var done = false;
+function stopVideo() { player.stopVideo(); }
+function onPlayerReady(event) { event.target.playVideo(); }
+function onPlayerStateChange(event){
+    if (event.data === 0) {
+        stopVideo()
+        done = true; } }
+function onYouTubeIframeAPIReady() {
+    player = new YT.Player('player', {
+        height: '325',
+        width: '525',
+        videoId: youtubeUrlValidation("{{ object.input_youtube }}"),
+        playerVars: {
+        'playsinline': 1
+        },
+        events: {
+        //'onReady': onPlayerReady,  // 새로고침 시 자동재생 안 되도록 주석 처리
+        'onStateChange': onPlayerStateChange,
+        'onReady': onVideoLoaded,
+        }
+    });
+}
+// 추가분
+// 작성된 글자를 클릭할 때 호출되는 함수입니다.
+    function seekToTimestamp(time) {
+      if (player && typeof player.seekTo === "function") {
+        player.seekTo(time, true);
+      } else if (video) {
+        video.currentTime = time;
+      }
+    }
+
+  // 영상 시간에 따라 자막 색상을 변경하는 함수를 작성하고, 이 함수를 비디오의 'timeupdate' 이벤트 리스너에 연결
+
+  function updateCaptionColor() {
+  let currentTime;
+
+  if (player && typeof player.getCurrentTime === "function") {
+    currentTime = player.getCurrentTime();
+  } else if (video) {
+    currentTime = video.currentTime;
+  } else {
+    return;
+  }
+
+  const captionSpans = document.querySelectorAll('[data-lexical-text]');
+    console.log("updateCaptionColor called, current time: ", currentTime);
+    captionSpans.forEach((span, index) => {
+      const spanTime = parseFloat(span.getAttribute('t'));
+      console.log(spanTime); // 현재 spanTime 값을 콘솔에 출력
+
+      let nextSpanTime;
+
+      if (index + 1 < captionSpans.length) {
+        nextSpanTime = parseFloat(captionSpans[index + 1].getAttribute('t'));
+      } else {
+        nextSpanTime = Infinity; // 마지막 span이므로 끝 시간을 무한대로 설정
+      }
+
+      if (currentTime >= spanTime && currentTime < nextSpanTime) {
+        span.style.backgroundColor = 'red';
+      } else {
+        span.style.backgroundColor = '';
+      }
+    });
+  }
+
+
+
+  //   data-lexical-time 속성이 있는 글자를 클릭하면 해당 시간대로 비디오를 이동시키는 코드
+  document.querySelectorAll('[data-lexical-time]').forEach((span) => {
+    span.addEventListener('click', () => {
+      const timestamp = span.getAttribute('data-lexical-time');
+      seekToTimestamp(parseTimestamp(timestamp));
+    });
+  });
+
+  // "핏"과 같은 형식으로 작성된 글자에서 시간대를 파싱하는 함수입니다.
+  function parseTimestamp(timestamp) {
+    const parts = timestamp.split(':');
+    const hours = parseInt(parts[0]);
+    const minutes = parseInt(parts[1]);
+    const seconds = parseFloat(parts[2].replace(',', '.'));
+    return hours * 3600 + minutes * 60 + seconds;
+  }
+
+// 비디오가 로드된 후 호출되는 함수입니다.
+function onVideoLoaded() {
+  setInterval(updateCaptionColor, 100); // 0.1초마다 updateCaptionColor() 함수를 호출합니다.
+  console.log('onVideoLoaded called');
+}
+
+ // 추가 종료
+
+
+$(document).ready(function(){
+    // toggle button for total <-> summary
+    var content = $(".textSection .content");
+    var check = $("#toggleText");
+    check.on('click', (event) => {
+        $(".opt").toggleClass("on");
+        content.toggleClass("on");
+    });
+
+});
+</script>
+{% endblock %}
